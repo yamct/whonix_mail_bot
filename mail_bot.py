@@ -32,17 +32,26 @@ def send_email(account, fromaddr, toaddr, subject, body, verbosity=1):
     server.quit()
     return 'Email Sent'
 
-def receive_email(account, verbosity=1):
+def receive_emails(account, verbosity=1):
     M = poplib.POP3_SSL(account.receiving_server, account.receiving_port)
     M.set_debuglevel(verbosity)
     M.user(account.username)
     M.pass_(account.password)
-    num_messages = len(M.list()[1])
-    messages = [M.retr(i+1) for i in xrange(0, num_messages)]
+    num_emails = len(M.list()[1])
+    emails = [M.retr(i+1) for i in xrange(0, num_emails)]
     M.quit()
     if verbosity == 1:
-        print messages
-    return messages
+        print emails
+    return [email[1] for email in emails] # Remove extra crap like '+OK x bytes will follow', and keep the good parts
+
+def match_emails(emails, criteria):
+    """Returns a list of emails from the supplied list, whose headers match those in the "criteria" list"""
+    for criterion in criteria:
+        #emails = filter(lambda email: criterion in email, emails)
+        emails = [email for email in emails if email.count(criterion) == 1]
+    return emails
+
+    
 
 #def delete_emails(account, emails, verbosity=1):
     

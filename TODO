@@ -1,3 +1,4 @@
 1. Make it functioning
 2. Make sure it fails well
 3. Make sure it logs it when it does
+4. Use something other than ascii in the emails
