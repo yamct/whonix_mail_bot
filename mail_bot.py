@@ -43,5 +43,5 @@ def receive_email(account, verbosity=1):
         print messages
     return messages
 
-def delete_emails(account, verbosity=1):
+#def delete_emails(account, emails, verbosity=1):
     
