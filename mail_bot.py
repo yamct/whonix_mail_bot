@@ -42,8 +42,8 @@ def pop_connect(account, verbosity=0):
 def pop_retrieve_all(connection, verbosity=0):
     num_emails = len(connection.list()[1]) # Get number of emails
     emails = [connection.retr(i+1) for i in xrange(0, num_emails)] # Get each one
-    if verbosity == 1:
-        print emails
+    #if verbosity > 1:
+    #    print emails
     return [email[1] for email in emails] # Remove extra crap like '+OK x bytes will follow', and keep the good parts
 
 def receive_emails(account, verbosity=0):
@@ -51,6 +51,7 @@ def receive_emails(account, verbosity=0):
     connection = pop_connect(account, verbosity)
     emails = pop_retrieve_all(connection, verbosity)
     connection.quit() # End connection
+
     return emails
 
 def delete_emails(account, unwanted_emails, verbosity=0):
@@ -65,7 +66,7 @@ def delete_emails(account, unwanted_emails, verbosity=0):
     # Let's connect to the server to start deleting    
     #map(connection.dele, unwanted_nums)
     for num in unwanted_nums:
-        connection.dele(num)
+        connection.dele(num+1) # Note that emails are 1-indexed
     connection.quit()
 
 def match_emails(emails, criteria):
