@@ -1,6 +1,6 @@
 import smtplib
 import poplib
-
+from email.mime.text import MIMEText
 
 class Account:
     """Stores necessary info for sending and receiving email"""
@@ -20,14 +20,15 @@ class Account:
         self.receiving_encryption = encryption
         self.receiving_protocol = protocol                
 
-def send_email(account, fromaddr, toaddr, content, verbosity=1):
-    msg = ("From: %s\r\nTo: %s\r\n\r\n"
-       % (fromaddr, ", ".join(toaddr.split())))
-    msg += content
+def send_email(account, fromaddr, toaddr, subject, body, verbosity=1):
+    msg = MIMEText(body)
+    msg['Subject'] = subject
+    msg['From'] = fromaddr
+    msg['To'] = toaddr
     server = smtplib.SMTP_SSL(account.smtp_server, account.smtp_port)
     server.set_debuglevel(verbosity)
     server.login(account.username, account.password)
-    server.sendmail(fromaddr, toaddr, msg)
+    server.sendmail(fromaddr, toaddr, msg.as_string())
     server.quit()
     return 'Email Sent'
 
