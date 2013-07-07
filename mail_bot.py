@@ -20,7 +20,7 @@ class Account:
         self.receiving_encryption = encryption
         self.receiving_protocol = protocol                
 
-def send_email(account, fromaddr, toaddr, subject, body, verbosity=1):
+def send_email(account, fromaddr, toaddr, subject, body, verbosity=0):
     msg = MIMEText(body)
     msg['Subject'] = subject
     msg['From'] = fromaddr
@@ -32,17 +32,41 @@ def send_email(account, fromaddr, toaddr, subject, body, verbosity=1):
     server.quit()
     return 'Email Sent'
 
-def receive_emails(account, verbosity=1):
-    M = poplib.POP3_SSL(account.receiving_server, account.receiving_port)
-    M.set_debuglevel(verbosity)
-    M.user(account.username)
-    M.pass_(account.password)
-    num_emails = len(M.list()[1])
-    emails = [M.retr(i+1) for i in xrange(0, num_emails)]
-    M.quit()
+def pop_connect(account, verbosity=0):
+    connection = poplib.POP3_SSL(account.receiving_server, account.receiving_port)
+    connection.set_debuglevel(verbosity)
+    connection.user(account.username)
+    connection.pass_(account.password)
+    return connection
+
+def pop_retrieve_all(connection, verbosity=0):
+    num_emails = len(connection.list()[1]) # Get number of emails
+    emails = [connection.retr(i+1) for i in xrange(0, num_emails)] # Get each one
     if verbosity == 1:
         print emails
     return [email[1] for email in emails] # Remove extra crap like '+OK x bytes will follow', and keep the good parts
+
+def receive_emails(account, verbosity=0):
+    # Get POP connection
+    connection = pop_connect(account, verbosity)
+    emails = pop_retrieve_all(connection, verbosity)
+    connection.quit() # End connection
+    return emails
+
+def delete_emails(account, unwanted_emails, verbosity=0):
+    """Delete emails in unwanted_emails from server"""
+    #print '\n\n\n\nUNWANTED:\n\n\n'+str(unwanted_emails)+'\n\n\n\n'
+    # Let's see what emails are on the server    
+    connection = pop_connect(account, verbosity)
+    emails = pop_retrieve_all(connection)
+    le = len(emails)
+    unwanted_nums = [i for i in xrange(0, le) if emails[i] in unwanted_emails]
+    print unwanted_nums
+    # Let's connect to the server to start deleting    
+    #map(connection.dele, unwanted_nums)
+    for num in unwanted_nums:
+        connection.dele(num)
+    connection.quit()
 
 def match_emails(emails, criteria):
     """Returns a list of emails from the supplied list, whose headers match those in the "criteria" list"""
@@ -51,7 +75,5 @@ def match_emails(emails, criteria):
         emails = [email for email in emails if email.count(criterion) == 1]
     return emails
 
-    
 
-#def delete_emails(account, emails, verbosity=1):
     
