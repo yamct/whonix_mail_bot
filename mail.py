@@ -2,6 +2,7 @@ import smtplib
 import poplib
 from email.mime.text import MIMEText
 from email import parser
+#import cPickle
 
 class Account:
     """Stores necessary info for sending and receiving email"""
@@ -86,7 +87,8 @@ def extract_subject(email):
     start = subject_header.index(' ')
     return subject_header[start+1:]
 
-def extract_body(email):
+def extract_body(email):    
+    email[email.index('Reply to this email directly or view it on GitHub:')] = "Do not reply, please respond directly on GitHub:"
     email = '\n'.join(email)
     start = email.index('>\n\n')
     email = email[start+3:]
@@ -94,3 +96,58 @@ def extract_body(email):
     return email[:end]
 
 
+def clean_duplicates(emails):
+    """try:
+        pickle_file = open('pickle', 'r')
+        already_sent = cPickle.load(pickle_file)
+        pickle_file.close()
+    except:
+        already_sent= []
+    """
+    try:
+        fp = open('sent', 'r+')
+        already_sent = fp.readlines()
+    except IOError:
+        fp = open('sent', 'w+')
+        already_sent = []
+    finally:
+        fp.close()
+    unsent = []
+    for email_id in already_sent: # ignore already sent emails
+        for email in emails:
+            print email[12]
+            print email_id.strip('\n')
+            print email_id.strip('\n') == email[12]
+            #print email_id.strip('\n')
+            if email_id.strip('\n') in email:
+                emails.remove(email)
+                break
+            
+
+        #emails = [email for email in emails if email_id.strip('\n') not in email]
+        #print unsent
+    print emails    
+    assert emails == []
+    return emails
+
+def add_IDs(emails):
+    """Add IDs of emails to sent"""
+    emails = clean_duplicates(emails)
+    """try:
+        pickle_file = open('pickle', 'r+')
+        already_sent = cPickle.load(pickle_file)
+    except EOFError:
+        already_sent = []
+    """
+    fp = open('sent', 'w+')
+    already_sent = fp.readlines()
+    for email in emails: 
+        already_sent += [header for header in email if 'Message-ID: <' in header] # add Message-ID to list of already sent
+    for ID in already_sent:
+        fp.write(ID + '\n')
+    fp.close()
+    #cPickle.dump('pickle', pickle_file)
+    #pickle_file.close()    
+                
+        
+    
