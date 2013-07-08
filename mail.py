@@ -21,8 +21,9 @@ class Account:
         self.receiving_encryption = encryption
         self.receiving_protocol = protocol                
 
-def send_email(account, fromaddr, toaddr, subject, body, verbosity=0):
-    msg = MIMEText(body)
+def send_email(account, fromaddr, toaddr, subject, body, verbosity=0, mime_text=''):
+    if mime_text == '':
+        msg = MIMEText(body)
     msg['Subject'] = subject
     msg['From'] = fromaddr
     msg['To'] = toaddr
@@ -57,7 +58,6 @@ def receive_emails(account, verbosity=0):
 
 def delete_emails(account, unwanted_emails, verbosity=0):
     """Delete emails in unwanted_emails from server"""
-    #print '\n\n\n\nUNWANTED:\n\n\n'+str(unwanted_emails)+'\n\n\n\n'
     # Let's see what emails are on the server    
     connection = pop_connect(account, verbosity)
     emails = pop_retrieve_all(connection)
@@ -65,7 +65,6 @@ def delete_emails(account, unwanted_emails, verbosity=0):
     unwanted_nums = [i for i in xrange(0, le) if emails[i] in unwanted_emails]
     print unwanted_nums
     # Let's connect to the server to start deleting    
-    #map(connection.dele, unwanted_nums)
     for num in unwanted_nums:
         connection.dele(num+1) # Note that emails are 1-indexed
     connection.quit()
@@ -75,6 +74,8 @@ def match_emails(emails, criteria):
     for criterion in criteria:
         #emails = filter(lambda email: criterion in email, emails)
         emails = [email for email in emails if email.count(criterion) == 1]
+        #print emails
+        #print '\n\n'
     return emails
 
 def extract_subject(email):
