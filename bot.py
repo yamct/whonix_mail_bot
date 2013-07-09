@@ -1,3 +1,5 @@
+import logging
+import logging.config
 from mail import *
 
 def find_headers(emails):
@@ -8,26 +10,21 @@ def find_headers(emails):
     return common_headers
         
 if __name__=='__main__':
-    criteria = ['Return-Path: <noreply@github.com>', 'Cc: WhonixTest <whonixtest@rambler.ru>', '---', 'Reply to this email directly or view it on GitHub:']
-#, 'Mime-Version: 1.0', 'Content-Type: multipart/alternative;', ' charset=UTF-8', 'Content-Transfer-Encoding: 7bit', 'Precedence: list', 'X-GitHub-Recipient: WhonixTest', 'X-GitHub-Recipient-Address: whonixtest@rambler.ru', 'X-KLMS-AntiSpam-Envelope-From: noreply@github.com', 'X-KLMS-AntiSpam-Method: none', '', '', '', 'Mime-Version: 1.0', 'Content-Type: text/plain;', ' charset=UTF-8', 'Content-Transfer-Encoding: 7bit', '', '', '---', 'Reply to this email directly or view it on GitHub:', '', 'Mime-Version: 1.0', 'Content-Type: text/html;', ' charset=UTF-8', 'Content-Transfer-Encoding: 7bit', '', '', '']
     # You need to first create an account here
+    account = Account(USERNAME, PASSWORD)    
+    account.sending_info(smtp.yourdomainn.ame, port_number, 'SSL')
+    account.receiving_info('POP', smtp.yourdomainn.ame, port_number, 'SSL')
+    # Logging
+    logging.config.fileConfig('logger.conf')
+    logger = logging.getLogger('emailLogger')
 
     emails = receive_emails(account, 0)
-    #for email in emails:
-    #    print 'EMAIL:\n'
-    # print email        
-    #print(find_headers(emails))
+    criteria = ['Return-Path: <noreply@github.com>', 'Cc: WhonixTest <whonixtest@rambler.ru>', '---', 'Reply to this email directly or view it on GitHub:']    
     matches = clean_duplicates(match_emails(emails, criteria))
-
-    #for match in matches:
-    #print match
-    #print '\n\n\n\n'
     add_IDs(matches)
-    #trash = [email for email in emails if email not in matches]
-    #contents = [(extract_subject(email), extract_body(email)) for email in matches]
     for email in matches:
         subj = extract_subject(email)
         body = extract_body(email)
-        send_email(account, 'whonixtest@rambler.ru', 'yamct@rambler.ru', subj, body, 0)
+        send_email(account, 'whonixtest@rambler.ru', 'whonixtest@rambler.ru', subj, body, 0)
     
     

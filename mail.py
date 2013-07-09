@@ -1,8 +1,8 @@
 import smtplib
 import poplib
+import logging
 from email.mime.text import MIMEText
 from email import parser
-#import cPickle
 
 class Account:
     """Stores necessary info for sending and receiving email"""
@@ -31,22 +31,26 @@ def send_email(account, fromaddr, toaddr, subject, body, verbosity=0, mime_text=
     server = smtplib.SMTP_SSL(account.smtp_server, account.smtp_port)
     server.set_debuglevel(verbosity)
     server.login(account.username, account.password)
-    server.sendmail(fromaddr, toaddr, msg.as_string())
-    server.quit()
-    return 'Email Sent'
+    logger = logging.getLogger('emailLogger')
+    try:
+        server.sendmail(fromaddr, toaddr, msg.as_string())
+        server.quit()        
+        #logger.info('Sent email with body: \n%s' % (body))
+        logger.info('Sent email')
+    except smtplib.SMTPDataError:        
+        logger.error('Failure to send email')
+
 
 def pop_connect(account, verbosity=0):
     connection = poplib.POP3_SSL(account.receiving_server, account.receiving_port)
     connection.set_debuglevel(verbosity)
     connection.user(account.username)
-    connection.pass_(account.password)
+    connection.pass_(account.password)    
     return connection
 
 def pop_retrieve_all(connection, verbosity=0):
     num_emails = len(connection.list()[1]) # Get number of emails
     emails = [connection.retr(i+1) for i in xrange(0, num_emails)] # Get each one
-    #if verbosity > 1:
-    #    print emails
     return [email[1] for email in emails] # Remove extra crap like '+OK x bytes will follow', and keep the good parts
 
 def receive_emails(account, verbosity=0):
@@ -54,7 +58,8 @@ def receive_emails(account, verbosity=0):
     connection = pop_connect(account, verbosity)
     emails = pop_retrieve_all(connection, verbosity)
     connection.quit() # End connection
-
+    logger = logging.getLogger('emailLogger')
+    logger.info('Received %d emails' % (len(emails)))
     return emails
 
 def delete_emails(account, unwanted_emails, verbosity=0):
@@ -73,10 +78,9 @@ def delete_emails(account, unwanted_emails, verbosity=0):
 def match_emails(emails, criteria):
     """Returns a list of emails from the supplied list, whose headers match those in the "criteria" list"""
     for criterion in criteria:
-        #emails = filter(lambda email: criterion in email, emails)
         emails = [email for email in emails if email.count(criterion) == 1]
-        #print emails
-        #print '\n\n'
+    logger = logging.getLogger('emailLogger')
+    logger.info('Received %d *useful* emails' % (len(emails)))
     return emails
 
 def extract_subject(email):
@@ -97,13 +101,6 @@ def extract_body(email):
 
 
 def clean_duplicates(emails):
-    """try:
-        pickle_file = open('pickle', 'r')
-        already_sent = cPickle.load(pickle_file)
-        pickle_file.close()
-    except:
-        already_sent= []
-    """
     try:
         fp = open('sent', 'r+')
         already_sent = fp.readlines()
@@ -115,30 +112,16 @@ def clean_duplicates(emails):
     unsent = []
     for email_id in already_sent: # ignore already sent emails
         for email in emails:
-            print email[12]
-            print email_id.strip('\n')
-            print email_id.strip('\n') == email[12]
-            #print email_id.strip('\n')
             if email_id.strip('\n') in email:
                 emails.remove(email)
                 break
-            
-
-        #emails = [email for email in emails if email_id.strip('\n') not in email]
-        #print unsent
-    print emails    
-    assert emails == []
+    logger = logging.getLogger('emailLogger')
+    logger.info('Received %d *new* useful emails' % (len(emails)))
     return emails
 
 def add_IDs(emails):
     """Add IDs of emails to sent"""
     emails = clean_duplicates(emails)
-    """try:
-        pickle_file = open('pickle', 'r+')
-        already_sent = cPickle.load(pickle_file)
-    except EOFError:
-        already_sent = []
-    """
     fp = open('sent', 'w+')
     already_sent = fp.readlines()
     for email in emails: 
@@ -146,8 +129,6 @@ def add_IDs(emails):
     for ID in already_sent:
         fp.write(ID + '\n')
     fp.close()
-    #cPickle.dump('pickle', pickle_file)
-    #pickle_file.close()    
                 
         
     

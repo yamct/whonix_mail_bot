@@ -1,4 +1,7 @@
-1. Make it functioning
-2. Make sure it fails well
-3. Make sure it logs it when it does
-4. Use something other than ascii in the emails
+Make it functioning - Done?
+Add Test Cases
+Get Delete working
+Make sure it fails well
+Get rid of hard coded values and add argparsing
+Logging
+Test unicode handling
