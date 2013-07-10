@@ -1,7 +1,8 @@
 Make it functioning - Done?
-Add Test Cases
-Get Delete working
+Add test Cases
+Get delete working
 Make sure it fails well
 Get rid of hard coded values and add argparsing
 Logging
 Test unicode handling
+Get Imap working

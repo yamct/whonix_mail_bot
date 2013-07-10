@@ -10,8 +10,10 @@ class Account:
     def __init__(self, username, password):
         self.username = username
         self.password = password
-    
-    def sending_info(self, server, port=25, encryption = 'SSL'):
+
+    def sending_info(self, fromaddr, toaddr, server, port=25, encryption = 'SSL'):
+        self.fromaddr = fromaddr
+        self.toaddr = toaddr
         self.smtp_server = server    
         self.smtp_port = port
         self.smtp_encryption = encryption
@@ -22,18 +24,18 @@ class Account:
         self.receiving_encryption = encryption
         self.receiving_protocol = protocol                
 
-def send_email(account, fromaddr, toaddr, subject, body, verbosity=0, mime_text=''):
-    if mime_text == '':
-        msg = MIMEText(body)
+def send_email(account, subject, body, verbosity=0):
+    msg = MIMEText(body)
     msg['Subject'] = subject
-    msg['From'] = fromaddr
-    msg['To'] = toaddr
+    msg['From'] = account.fromaddr
+    msg['To'] = account.toaddr
     server = smtplib.SMTP_SSL(account.smtp_server, account.smtp_port)
     server.set_debuglevel(verbosity)
     server.login(account.username, account.password)
-    logger = logging.getLogger('emailLogger')
+    logger = logging.getLogger('emailLogger') 
+    print body
     try:
-        server.sendmail(fromaddr, toaddr, msg.as_string())
+        server.sendmail(account.fromaddr, account.toaddr, msg.as_string())
         server.quit()        
         #logger.info('Sent email with body: \n%s' % (body))
         logger.info('Sent email')
@@ -62,6 +64,7 @@ def receive_emails(account, verbosity=0):
     logger.info('Received %d emails' % (len(emails)))
     return emails
 
+# Not working
 def delete_emails(account, unwanted_emails, verbosity=0):
     """Delete emails in unwanted_emails from server"""
     # Let's see what emails are on the server    
@@ -101,9 +104,11 @@ def extract_body(email):
 
 
 def clean_duplicates(emails):
+    """Don't send emails that have already been sent"""
     try:
         fp = open('sent', 'r+')
         already_sent = fp.readlines()
+        already_sent = [email.strip('\n') for email in already_sent]
     except IOError:
         fp = open('sent', 'w+')
         already_sent = []
@@ -122,10 +127,13 @@ def clean_duplicates(emails):
 def add_IDs(emails):
     """Add IDs of emails to sent"""
     emails = clean_duplicates(emails)
-    fp = open('sent', 'w+')
+    fp = open('sent', 'r+')
     already_sent = fp.readlines()
-    for email in emails: 
+    already_sent = [email.strip('\n') for email in already_sent]
+    print already_sent
+    for email in emails:
         already_sent += [header for header in email if 'Message-ID: <' in header] # add Message-ID to list of already sent
+    print already_sent
     for ID in already_sent:
         fp.write(ID + '\n')
     fp.close()
